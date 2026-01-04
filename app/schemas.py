@@ -66,3 +66,24 @@ class ScoreResponse(BaseModel):
     threshold: float
     model_version: str
     scored_at: str
+
+    orm_mode = True
+
+
+class FraudPredictionRequest(BaseModel):
+    transaction_id: int | None = None
+
+    amount: float = Field(ge=0)
+    transaction_hour: int = Field(ge=0, le=23)
+    merchant_category: str
+    foreign_transaction: int = Field(ge=0, le=1)
+    location_mismatch: int = Field(ge=0, le=1)
+    device_trust_score: float
+    velocity_last_24h: int = Field(ge=0)
+    cardholder_age: int = Field(ge=0)
+
+
+class FraudPredictionResponse(BaseModel):
+    transaction_id: int | None
+    is_fraud_pred: int
+    fraud_probability: float
