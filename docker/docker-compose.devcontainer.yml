@@ -1,32 +1,26 @@
-version: '3.8'
+include:
+  - docker-compose.base.yml
 
 services:
   app:
-    build:
-      context: ..
-      dockerfile: dockerfiles/app.dockerfile
+    extends:
+      file: docker-compose.base.yml
+      service: app_base
     volumes:
       - ..:/workspace:cached
-
     environment:
       DATABASE_URI: postgresql://postgres:postgres@db/web
       DATABASE_URI_TEST: postgresql://postgres:postgres@db/web_test
-
     command: sleep infinity
     network_mode: service:db
     depends_on:
       - db
 
   db:
-    build:
-      context: ..
-      dockerfile: dockerfiles/db.dockerfile
+    extends:
+      file: docker-compose.base.yml
+      service: db_base
     restart: unless-stopped
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-
-volumes:
-  postgres-data:

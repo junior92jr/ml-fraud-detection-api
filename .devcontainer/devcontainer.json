@@ -1,6 +1,6 @@
 {
   "name": "Python 3 & FastAPI & PostgreSQL",
-  "dockerComposeFile": "docker-compose.yml",
+  "dockerComposeFile": "../docker/docker-compose.devcontainer.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
   "customizations": {
@@ -8,12 +8,10 @@
       "extensions": [
         "ms-python.debugpy",
         "ms-python.python",
-        "ms-python.black-formatter",
-        "ms-python.isort",
         "ms-python.vscode-pylance",
-        "ms-python.flake8",
         "mtxr.sqltools",
-        "mtxr.sqltools-driver-pg"
+        "mtxr.sqltools-driver-pg",
+        "charliermarsh.ruff"
       ]
     }
   },

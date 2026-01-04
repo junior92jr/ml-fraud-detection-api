@@ -14,7 +14,7 @@
   ],
   "python.defaultInterpreterPath": "/usr/local/bin/python",
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "charliermarsh.ruff"
   },
   "python.languageServer": "Pylance",
   "editor.insertSpaces": true,
@@ -22,8 +22,7 @@
   "python.testing.pytestEnabled": true,
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.organizeImports": "always",
-    "source.fixAll": "always"
+    "source.fixAll.ruff": "always"
   },
   "editor.rulers": [
     88
