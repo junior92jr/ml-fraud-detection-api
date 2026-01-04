@@ -1,6 +1,6 @@
 {
   "name": "Python 3 & FastAPI & PostgreSQL",
-  "dockerComposeFile": "../docker/docker-compose.devcontainer.yml",
+  "dockerComposeFile": "./docker-compose.devcontainer.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
   "customizations": {

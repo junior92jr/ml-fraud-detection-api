@@ -1,11 +1,14 @@
-include:
-  - docker-compose.base.yml
+version: '3.8'
 
 services:
   web:
-    extends:
-      file: docker-compose.base.yml
-      service: app_base
+    build:
+      context: ./
+      dockerfile: dockerfiles/app.dockerfile
+    volumes:
+      - ./:/workspace:cached
+    env_file:
+      - .env
     command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
     container_name: fastapi-app
     ports:
@@ -13,15 +16,21 @@ services:
     depends_on:
       web-db:
         condition: service_healthy
-
   web-db:
-    extends:
-      file: docker-compose.base.yml
-      service: db_base
+    build:
+      context: ./
+      dockerfile: dockerfiles/db.dockerfile
     container_name: fastapi-db
     expose:
       - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - .env
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "postgres" ]
       interval: 5s
       retries: 5
+
+volumes:
+  postgres-data:
