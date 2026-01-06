@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.database import create_db_and_tables
-from app.routers import items
+from app.routers import score, transactions
 from app.utils.logger import logger_config
 
 logger = logger_config(__name__)
@@ -30,7 +30,10 @@ def create_application() -> FastAPI:
         lifespan=lifespan,
     )
 
-    application.include_router(items.router, prefix="/items", tags=["Items"])
+    application.include_router(score.router, prefix="/score", tags=["Scoring"])
+    application.include_router(
+        transactions.router, prefix="/transactions", tags=["Transactions"]
+    )
 
     return application
 
