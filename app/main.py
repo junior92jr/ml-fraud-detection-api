@@ -4,13 +4,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.database import create_db_and_tables
-from app.inference.predictor import Predictor
-from app.routers import predict, score, transactions
+from app.routers import score, transactions
 from app.utils.logger import logger_config
 
 logger = logger_config(__name__)
 
-MODEL_PATH = os.getenv("MODEL_PATH", "artifacts/model.joblib")
+MODEL_PATH = os.getenv("MODEL_PATH", "/workspace/artifacts/model.joblib")
 
 
 @asynccontextmanager
@@ -20,16 +19,7 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
 
     logger.info("startup: triggered")
-
-    # ML model init
-    predictor = Predictor(MODEL_PATH)
-    predictor.load()
-
-    # Store predictor on app state
-    app.state.predictor = predictor
-
-    logger.info("startup: DB initialized, ML model loaded")
-
+    logger.info("startup: DB initialized (model will be loaded lazily)")
     yield
 
     logger.info("shutdown: triggered")
@@ -46,11 +36,6 @@ def create_application() -> FastAPI:
     application.include_router(score.router, prefix="/score", tags=["Scoring"])
     application.include_router(
         transactions.router, prefix="/transactions", tags=["Transactions"]
-    )
-
-    application.include_router(
-        predict.router,
-        tags=["Prediction"],
     )
 
     return application

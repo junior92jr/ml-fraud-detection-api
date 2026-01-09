@@ -62,16 +62,14 @@ class ScoreRequest(TransactionBase):
 class ScoreResponse(BaseModel):
     transaction_id: str
     fraud_probability: float = Field(ge=0, le=1)
-    decision: Literal["approve", "review", "reject"]
+    decision: Literal[1, 0]
     threshold: float
     model_version: str
     scored_at: str
 
-    orm_mode = True
-
 
 class FraudPredictionRequest(BaseModel):
-    transaction_id: int | None = None
+    transaction_id: str | None = None
 
     amount: float = Field(ge=0)
     transaction_hour: int = Field(ge=0, le=23)
@@ -84,6 +82,6 @@ class FraudPredictionRequest(BaseModel):
 
 
 class FraudPredictionResponse(BaseModel):
-    transaction_id: int | None
+    transaction_id: str | None
     is_fraud_pred: int
     fraud_probability: float
