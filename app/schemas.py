@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -57,6 +58,28 @@ class ScoreRequest(TransactionBase):
     """Fraud scoring request payload"""
 
     pass
+
+
+class Decision(Enum):
+    APPROVE = ("approve", 1)
+    REJECT = ("reject", 0)
+
+    @property
+    def label(self) -> str:
+        return self.value[0]
+
+    @property
+    def code(self) -> int:
+        return self.value[1]
+
+
+class ScoreResponse(BaseModel):
+    transaction_id: str
+    fraud_probability: float = Field(ge=0, le=1)
+    decision: int
+    threshold: float
+    model_version: str
+    scored_at: str
 
 
 class ScoreResponse(BaseModel):

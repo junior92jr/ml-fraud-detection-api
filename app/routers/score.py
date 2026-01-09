@@ -32,15 +32,15 @@ def score_transaction(
     model = get_model()
     threshold = get_threshold()
 
-    data = payload.model_dump()
-    data.pop("transaction_id", None)
+    features = payload.model_dump()
+    features.pop("transaction_id", None)
 
-    X = pd.DataFrame([data])
+    features_df = pd.DataFrame([features])
 
     if hasattr(model, "predict_proba"):
-        fraud_probability = float(model.predict_proba(X)[0, 1])
+        fraud_probability = float(model.predict_proba(features_df)[0, 1])
     else:
-        fraud_probability = float(model.predict(X)[0])
+        fraud_probability = float(model.predict(features_df)[0])
 
     decision = int(fraud_probability >= threshold)
 

@@ -22,7 +22,16 @@ def get_model_bundle() -> dict[str, Any]:
         if _bundle is not None:
             return _bundle
 
-        model_path = Path(os.getenv("MODEL_PATH", "/workspace/artifacts/model.joblib"))
+        try:
+            model_path = Path(os.environ["MODEL_PATH"])
+        except KeyError as e:
+            raise RuntimeError("MODEL_PATH environment variable is not set") from e
+
+        if not model_path.exists():
+            raise RuntimeError(
+                f"Model file not found at {model_path}. Set MODEL_PATH correctly."
+            )
+
         loaded = joblib.load(model_path)
 
         if not isinstance(loaded, dict) or "model" not in loaded:
