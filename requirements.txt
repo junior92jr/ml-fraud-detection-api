@@ -8,4 +8,11 @@ asyncpg==0.30.0
 SQLAlchemy==2.0.36
 psycopg2==2.9.10
 
+# ML / data science (runtime inference)
+scikit-learn==1.6.1
+joblib==1.5.3
+pandas==2.3.3
+numpy>=1.26,<2.0
+
+
 -r dev-requirements.txt

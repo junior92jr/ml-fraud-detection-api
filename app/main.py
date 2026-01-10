@@ -1,4 +1,6 @@
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -9,6 +11,9 @@ from app.utils.logger import logger_config
 logger = logger_config(__name__)
 
 
+MODEL_PATH = Path(os.environ["MODEL_PATH"])
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Triggers event before Fast API is started."""
@@ -16,7 +21,7 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
 
     logger.info("startup: triggered")
-
+    logger.info("startup: DB initialized (model will be loaded lazily)")
     yield
 
     logger.info("shutdown: triggered")

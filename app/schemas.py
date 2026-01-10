@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -59,10 +60,51 @@ class ScoreRequest(TransactionBase):
     pass
 
 
+class Decision(Enum):
+    APPROVE = ("approve", 1)
+    REJECT = ("reject", 0)
+
+    @property
+    def label(self) -> str:
+        return self.value[0]
+
+    @property
+    def code(self) -> int:
+        return self.value[1]
+
+
 class ScoreResponse(BaseModel):
     transaction_id: str
     fraud_probability: float = Field(ge=0, le=1)
-    decision: Literal["approve", "review", "reject"]
+    decision: int
     threshold: float
     model_version: str
     scored_at: str
+
+
+class ScoreResponse(BaseModel):
+    transaction_id: str
+    fraud_probability: float = Field(ge=0, le=1)
+    decision: Literal[1, 0]
+    threshold: float
+    model_version: str
+    scored_at: str
+
+
+class FraudPredictionRequest(BaseModel):
+    transaction_id: str | None = None
+
+    amount: float = Field(ge=0)
+    transaction_hour: int = Field(ge=0, le=23)
+    merchant_category: str
+    foreign_transaction: int = Field(ge=0, le=1)
+    location_mismatch: int = Field(ge=0, le=1)
+    device_trust_score: float
+    velocity_last_24h: int = Field(ge=0)
+    cardholder_age: int = Field(ge=0)
+
+
+class FraudPredictionResponse(BaseModel):
+    transaction_id: str | None
+    is_fraud_pred: int
+    fraud_probability: float

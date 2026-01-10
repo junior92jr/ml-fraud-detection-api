@@ -1,39 +1,53 @@
-class DummyFraudModel:
+import os
+from pathlib import Path
+from threading import Lock
+from typing import Any
+
+import joblib
+
+_lock = Lock()
+_bundle: dict[str, Any] | None = None
+
+
+def get_model_bundle() -> dict[str, Any]:
     """
-    Placeholder model object.
-    In a real setup this could be a sklearn, xgboost, torch, etc. model.
+    Lazy-load model bundle from joblib once per process.
+    Expected keys: 'model', 'threshold'
     """
+    global _bundle
+    if _bundle is not None:
+        return _bundle
 
-    version = "dummy-v1"
+    with _lock:
+        if _bundle is not None:
+            return _bundle
 
-    def predict_proba(self, features: dict) -> float:
-        """
-        Very naive fraud probability logic.
-        """
-        score = 0.0
+        try:
+            model_path = Path(os.environ["MODEL_PATH"])
+        except KeyError as e:
+            raise RuntimeError("MODEL_PATH environment variable is not set") from e
 
-        if features["amount"] > 500:
-            score += 0.3
-        if features["foreign_transaction"]:
-            score += 0.25
-        if features["location_mismatch"]:
-            score += 0.25
-        if features["velocity_last_24h"] > 5:
-            score += 0.15
-        if features["device_trust_score"] < 40:
-            score += 0.2
+        if not model_path.exists():
+            raise RuntimeError(
+                f"Model file not found at {model_path}. Set MODEL_PATH correctly."
+            )
 
-        return min(score, 1.0)
+        loaded = joblib.load(model_path)
 
+        if not isinstance(loaded, dict) or "model" not in loaded:
+            raise RuntimeError(
+                f"Invalid model artifact at {model_path}. Expected dict with key 'model'. "
+                f"Got {type(loaded)}"
+            )
 
-_model_instance = None
+        _bundle = loaded
+        return _bundle
 
 
 def get_model():
-    """
-    Simple singleton loader.
-    """
-    global _model_instance
-    if _model_instance is None:
-        _model_instance = DummyFraudModel()
-    return _model_instance
+    return get_model_bundle()["model"]
+
+
+def get_threshold(default: float = 0.5) -> float:
+    bundle = get_model_bundle()
+    return float(bundle.get("threshold", default))
