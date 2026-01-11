@@ -1,22 +1,18 @@
-import os
-
 import pytest
 from fastapi.testclient import TestClient
 
+from app.config import settings_test
 from app.database import create_db_and_tables, drop_db_and_tables
 from app.main import create_application
 
-# Override DATABASE_URI for tests
-os.environ["DATABASE_URI"] = os.environ.get(
-    "DATABASE_URI_TEST", os.environ["DATABASE_URI"]
-)
 
-
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def client():
-    """Fixture to provide a test client with database setup and teardown."""
-    app = create_application()
+    """Test client using test settings."""
+    app = create_application(settings_test)
+    # Create test tables before each test
+    create_db_and_tables(app.state.engine)
     with TestClient(app) as client:
-        create_db_and_tables()
         yield client
-        drop_db_and_tables()
+    # Drop tables after test
+    drop_db_and_tables(app.state.engine)

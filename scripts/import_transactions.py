@@ -1,6 +1,8 @@
 import csv
 
-from app.database import SessionLocal
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.database import init_engine
 from app.models import Transaction
 from app.schemas import TransactionCreate
 from app.utils.logger import logger_config
@@ -12,15 +14,15 @@ def parse_bool(value: str) -> bool:
     return bool(int(value))
 
 
-def import_transactions() -> None:
+def import_transactions(session_factory: sessionmaker) -> None:
     logger = logger_config("import_transactions")
-    session = SessionLocal()
     inserted = 0
     skipped_duplicates = 0
 
+    session: Session = session_factory()
+
     with open(CSV_PATH, newline="") as f:
         reader = csv.DictReader(f)
-
         for row in reader:
             try:
                 data = TransactionCreate(
@@ -35,7 +37,9 @@ def import_transactions() -> None:
                     cardholder_age=int(row["cardholder_age"]),
                 )
             except Exception as e:
-                logger.error(f"Skipping invalid row {row['transaction_id']}: {e}")
+                logger.error(
+                    f"Skipping invalid row {row.get('transaction_id', 'N/A')}: {e}"
+                )
                 continue
 
             existing = (
@@ -53,13 +57,18 @@ def import_transactions() -> None:
             session.add(Transaction(**data.model_dump()))
             inserted += 1
 
-        session.commit()
+    session.commit()
+    session.close()
 
     logger.info(
         f"Imported {inserted} transactions, skipped {skipped_duplicates} duplicates"
     )
-    session.close()
 
 
 if __name__ == "__main__":
-    import_transactions()
+    from app.config import settings
+    from app.database import init_engine
+
+    engine, SessionLocal = init_engine(settings.DATABASE_URI, echo=True)
+
+    import_transactions(SessionLocal)

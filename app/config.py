@@ -5,14 +5,16 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Implements General Settings for the Application."""
-
-    PROJECT_NAME: str = "Fast API Seed"
+    PROJECT_NAME: str = "ML Fraud Detection API"
     VERSION: str = "v1"
     DATABASE_URI: str = os.getenv("DATABASE_URI", "")
-    TEST_DATABASE_URI: str = os.getenv("DATABASE_URI_TEST", "")
 
     model_config = ConfigDict(case_sensitive=True)
 
 
+class SettingsTest(Settings):
+    DATABASE_URI: str = os.getenv("DATABASE_URI_TEST", "")
+
+
 settings = Settings()
+settings_test = SettingsTest()
