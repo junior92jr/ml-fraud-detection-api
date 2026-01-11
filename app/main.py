@@ -1,6 +1,4 @@
-import os
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -9,9 +7,6 @@ from app.routers import score, transactions
 from app.utils.logger import logger_config
 
 logger = logger_config(__name__)
-
-
-MODEL_PATH = Path(os.environ["MODEL_PATH"])
 
 
 @asynccontextmanager

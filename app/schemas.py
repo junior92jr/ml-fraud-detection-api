@@ -1,24 +1,7 @@
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field
-
-
-class ItemBase(BaseModel):
-    name: str
-    description: str | None = None
-
-
-class ItemCreate(ItemBase):
-    pass
-
-
-class ItemResponse(ItemBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
+from pydantic import BaseModel, ConfigDict, Field
 
 MerchantCategory = Literal[
     "Electronics",
@@ -50,8 +33,7 @@ class TransactionCreate(TransactionBase):
 class TransactionRead(TransactionBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScoreRequest(TransactionBase):
@@ -77,15 +59,6 @@ class ScoreResponse(BaseModel):
     transaction_id: str
     fraud_probability: float = Field(ge=0, le=1)
     decision: int
-    threshold: float
-    model_version: str
-    scored_at: str
-
-
-class ScoreResponse(BaseModel):
-    transaction_id: str
-    fraud_probability: float = Field(ge=0, le=1)
-    decision: Literal[1, 0]
     threshold: float
     model_version: str
     scored_at: str
