@@ -5,7 +5,7 @@
       "name": "Container database",
       "driver": "PostgreSQL",
       "previewLimit": 50,
-      "server": "localhost",
+      "server": "web-db",
       "port": 5432,
       "database": "web",
       "username": "postgres",
