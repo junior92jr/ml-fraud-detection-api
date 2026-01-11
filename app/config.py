@@ -1,5 +1,6 @@
 import os
 
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -11,8 +12,7 @@ class Settings(BaseSettings):
     DATABASE_URI: str = os.getenv("DATABASE_URI", "")
     TEST_DATABASE_URI: str = os.getenv("DATABASE_URI_TEST", "")
 
-    class Config:
-        case_sensitive = True
+    model_config = ConfigDict(case_sensitive=True)
 
 
 settings = Settings()
