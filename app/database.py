@@ -2,10 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.config import settings
-from app.utils.common import is_testing
 
 engine = create_engine(
-    settings.DATABASE_URI if not is_testing() else settings.TEST_DATABASE_URI,
+    settings.DATABASE_URI,
     echo=True,
 )
 

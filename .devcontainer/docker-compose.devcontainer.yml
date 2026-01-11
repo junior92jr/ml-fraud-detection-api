@@ -12,12 +12,12 @@ services:
       PYTHONPATH: /workspace
       MODEL_PATH: /workspace/artifacts/model.joblib
       DATABASE_URI: postgresql://postgres:postgres@web-db/web
-      DATABASE_URI_TEST: postgresql://postgres:postgres@web-db/web_test
+      DATABASE_URI_TEST: postgresql://postgres:postgres@db_test/web_test
 
     command: sleep infinity
-    network_mode: service:web-db
     depends_on:
       - web-db
+      - db_test
 
   web-db:
     build:
@@ -30,5 +30,16 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
+  db_test:
+    image: postgres:15.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: web_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
+
 volumes:
   postgres-data:
+  db_test_data:
