@@ -29,14 +29,15 @@ def get_model_bundle() -> dict[str, Any]:
 
         if not model_path.exists():
             raise RuntimeError(
-                f"Model file not found at {model_path}. Set MODEL_PATH correctly."
+                f"Model file not found at {model_path}. " "Set MODEL_PATH correctly."
             )
 
         loaded = joblib.load(model_path)
 
         if not isinstance(loaded, dict) or "model" not in loaded:
             raise RuntimeError(
-                f"Invalid model artifact at {model_path}. Expected dict with key 'model'. "
+                f"Invalid model artifact at {model_path}. "
+                "Expected dict with key 'model'. "
                 f"Got {type(loaded)}"
             )
 
