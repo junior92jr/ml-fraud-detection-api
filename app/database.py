@@ -1,31 +1,39 @@
+from typing import Generator
+
+from fastapi import Request
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-
-from app.config import settings
-from app.utils.common import is_testing
-
-engine = create_engine(
-    settings.DATABASE_URI if not is_testing() else settings.TEST_DATABASE_URI,
-    echo=True,
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 Base = declarative_base()
 
 
-def create_db_and_tables() -> None:
-    """Creates the tables in the database from the models."""
+def init_engine(
+    database_uri: str, *, echo: bool = False
+) -> tuple[Engine, sessionmaker]:
+    engine = create_engine(
+        database_uri,
+        echo=echo,
+        pool_pre_ping=True,
+    )
+    SessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=engine,
+    )
+    return engine, SessionLocal
+
+
+def create_db_and_tables(engine: Engine) -> None:
     Base.metadata.create_all(bind=engine)
 
 
-def drop_db_and_tables() -> None:
-    """Drops the tables in the database, clearing all data."""
+def drop_db_and_tables(engine: Engine) -> None:
     Base.metadata.drop_all(bind=engine)
 
 
-def get_session():
-    """Generates a database session."""
+def get_session(request: Request) -> Generator[Session, None, None]:
+    SessionLocal = request.app.state.SessionLocal
     db = SessionLocal()
     try:
         yield db

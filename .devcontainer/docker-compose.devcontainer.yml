@@ -7,28 +7,23 @@ services:
       dockerfile: dockerfiles/app.dockerfile
     volumes:
       - ..:/workspace:cached
-
     environment:
       PYTHONPATH: /workspace
       MODEL_PATH: /workspace/artifacts/model.joblib
-      DATABASE_URI: postgresql://postgres:postgres@web-db/web
-      DATABASE_URI_TEST: postgresql://postgres:postgres@web-db/web_test
-
+      DATABASE_URI: postgresql://postgres:postgres@web-db:5432/web
     command: sleep infinity
-    network_mode: service:web-db
     depends_on:
       - web-db
 
   web-db:
-    build:
-      context: ..
-      dockerfile: dockerfiles/db.dockerfile
+    image: postgres:15
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: web
 
 volumes:
   postgres-data:
