@@ -10,6 +10,17 @@ Credit card fraud detection is critical for financial institutions, with signifi
 
 The architecture follows clean code principles with clear separation of concerns. The API layer handles HTTP requests, validation, and responses, while the machine learning components are isolated for easy maintenance and updates. Technologies include FastAPI for high-performance web services, SQLAlchemy for database ORM, and Pydantic for data validation. Comprehensive unit testing with mocked dependencies ensures reliability. Containerization with Docker facilitates deployment and scalability.
 
+## ML Model Description
+
+The final model is a Logistic Regression classifier designed to detect fraudulent credit card transactions. It was trained using a complete preprocessing pipeline that includes one-hot encoding of categorical features and scaling of numerical variables.
+
+To address the strong class imbalance in the dataset, class weighting was applied and a stratified train/test split was used to preserve the original fraud distribution. Model performance was evaluated using precision, recall, F1-score, ROC-AUC, and confusion matrix analysis.
+
+Because fraud detection requires balancing missed fraud cases and false alerts, the default classification threshold was not used. Instead, the decision threshold was tuned based on model performance to achieve a more realistic trade-off between recall and precision.
+
+The model outputs fraud probabilities, which are converted into final predictions using the selected threshold.
+
+
 ## Project Structure
 
 The codebase is organized as follows:
