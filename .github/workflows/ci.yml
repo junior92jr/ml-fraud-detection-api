@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  quality-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: web_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d web_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PYTHONPATH: .
+      DATABASE_URI: postgresql://postgres:postgres@localhost:5432/web_test
+      DATABASE_URI_TEST: postgresql://postgres:postgres@localhost:5432/web_test
+      MODEL_PATH: artifacts/model.joblib
+      LOG_LEVEL: WARNING
+      LOGFIRE_TOKEN: ""
+      LOGFIRE_SERVICE_NAME: ml-fraud-detection-api
+      LOGFIRE_ENVIRONMENT: ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+
+      - name: Sync dependencies
+        run: make venv
+
+      - name: Wait for PostgreSQL
+        run: |
+          uv run python - <<'PY'
+          import time
+          from sqlalchemy import create_engine, text
+
+          uri = "postgresql://postgres:postgres@localhost:5432/web_test"
+
+          for _ in range(30):
+              try:
+                  engine = create_engine(uri)
+                  with engine.connect() as conn:
+                      conn.execute(text("SELECT 1"))
+                  raise SystemExit(0)
+              except Exception:
+                  time.sleep(2)
+
+          raise SystemExit("PostgreSQL did not become ready in time")
+          PY
+
+      - name: Auto-fix style (must be clean)
+        run: |
+          make fix
+          git diff --exit-code
+
+      - name: Lint and type checks
+        run: make check
+
+      - name: Run tests
+        run: make test
