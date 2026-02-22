@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import Mock, patch
 
 from sqlalchemy.orm import Session
@@ -42,6 +43,7 @@ def test_list_transactions(mock_get_session):
     mock_query.all.return_value = [MockTransaction("tx1"), MockTransaction("tx2")]
 
     response = list_transactions(limit=10, offset=0, db=mock_db)
+    response = cast(list[MockTransaction], response)
 
     assert len(response) == 2
     assert response[0].transaction_id == "tx1"
@@ -57,16 +59,17 @@ def test_get_transaction_found(mock_get_session):
     mock_tx = MockTransaction("tx123")
     mock_db.query.return_value.filter.return_value.one_or_none.return_value = mock_tx
 
-    mock_predictions_query = Mock()
     mock_db.query.return_value.filter.return_value.order_by.return_value.all.return_value = [
         MockPrediction("tx123")
     ]
 
     response = get_transaction("tx123", db=mock_db)
+    tx = response["transaction"]
+    assert isinstance(tx, MockTransaction)
 
     assert "transaction" in response
     assert "predictions" in response
-    assert response["transaction"].transaction_id == "tx123"
+    assert tx.transaction_id == "tx123"
     assert len(response["predictions"]) == 1
 
 
