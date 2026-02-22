@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: dockerfiles/app.dockerfile
+    environment:
+      PYTHONPATH: /workspace
+      MODEL_PATH: /workspace/artifacts/model.joblib
+      DATABASE_URI: postgresql://postgres:postgres@web-db:5432/web
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      web-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  web-db:
+    image: postgres:15
+    container_name: fastapi-db
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: web
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:

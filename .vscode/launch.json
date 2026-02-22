@@ -12,12 +12,12 @@
         "0.0.0.0",
         "--port",
         "8000",
-        "--reload" // Enable auto-reload for development
+        "--reload"
       ],
       "jinja": true,
-      "justMyCode": false, // Allows debugging of libraries as well
-      "console": "integratedTerminal", // Use the integrated terminal for output
-      "subProcess": true // Enables debugging of child processes
+      "justMyCode": false,
+      "console": "integratedTerminal",
+      "subProcess": true
     }
   ]
 }

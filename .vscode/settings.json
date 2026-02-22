@@ -1,36 +1,16 @@
 {
-  "terminal.integrated.defaultProfile.linux": "zsh",
-  "sqltools.connections": [
-    {
-      "name": "Container database",
-      "driver": "PostgreSQL",
-      "previewLimit": 50,
-      "server": "web-db",
-      "port": 5432,
-      "database": "web",
-      "username": "postgres",
-      "password": "postgres"
-    }
-  ],
-  "python.defaultInterpreterPath": "/usr/local/bin/python",
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff"
-  },
-  "python.languageServer": "Pylance",
-  "editor.insertSpaces": true,
-  "editor.tabSize": 4,
+  "explorer.excludeGitIgnore": true,
+  "mypy.runUsingActiveInterpreter": true,
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.preferDaemon": true,
+  "mypy-type-checker.reportingScope": "workspace",
+  "python.analysis.enablePytestSupport": true,
   "python.testing.pytestEnabled": true,
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.ruff": "always"
-  },
-  "editor.rulers": [
-    88
-  ],
-  "python.analysis.autoImportCompletions": true,
-  "python.analysis.typeCheckingMode": "off",
-  "python.analysis.diagnosticMode": "workspace",
-  "python.autoComplete.extraPaths": [
-    "./workspace"
-  ]
+  "python.testing.pytestArgs": ["-s", "-vvv", "--tb=short", "--color=yes"],
+  "python.envFile": "${workspaceFolder}/.env",
+  "coverage-gutters.highlightdark": "rgba(0, 122, 30, 0)",
+  "coverage-gutters.highlightlight": "rgba(0, 255, 64, 0)",
+  "testing.coverageToolbarEnabled": true,
+  "coverage-gutters.showGutterCoverage": false,
+  "coverage-gutters.showLineCoverage": true
 }
