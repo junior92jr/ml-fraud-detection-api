@@ -2,6 +2,7 @@ import datetime
 from unittest.mock import Mock, patch
 
 import numpy as np
+from fastapi import Request
 from sqlalchemy.orm import Session
 
 from app.routers.score import score_transaction
@@ -44,14 +45,13 @@ def test_score_transaction_existing_transaction(
 
     mock_get_model.return_value = MockModel()
     mock_get_threshold.return_value = 0.5
-    mock_datetime.now.return_value = datetime.datetime(
-        2023, 1, 1, tzinfo=datetime.timezone.utc
-    )
+    mock_datetime.now.return_value = datetime.datetime(2023, 1, 1, tzinfo=datetime.UTC)
 
     mock_db.add.return_value = None
     mock_db.commit.return_value = None
 
-    response = score_transaction(None, payload, mock_db)
+    mock_request = Mock(spec=Request)
+    response = score_transaction(mock_request, payload, mock_db)
 
     assert response.transaction_id == "test_tx_123"
     assert response.fraud_probability == 0.7
@@ -92,23 +92,22 @@ def test_score_transaction_new_transaction(
 
     mock_get_model.return_value = MockModel()
     mock_get_threshold.return_value = 0.6
-    mock_datetime.now.return_value = datetime.datetime(
-        2023, 1, 1, tzinfo=datetime.timezone.utc
-    )
+    mock_datetime.now.return_value = datetime.datetime(2023, 1, 1, tzinfo=datetime.UTC)
 
     mock_transaction_instance = MockTransaction("new_tx_456")
     mock_transaction_class.return_value = mock_transaction_instance
 
     mock_prediction_instance = Mock()
     mock_prediction_instance.scored_at = datetime.datetime(
-        2023, 1, 1, tzinfo=datetime.timezone.utc
+        2023, 1, 1, tzinfo=datetime.UTC
     )
     mock_prediction_class.return_value = mock_prediction_instance
 
     mock_db.add.return_value = None
     mock_db.commit.return_value = None
 
-    response = score_transaction(None, payload, mock_db)
+    mock_request = Mock(spec=Request)
+    response = score_transaction(mock_request, payload, mock_db)
 
     assert response.transaction_id == "new_tx_456"
     assert response.fraud_probability == 0.7
@@ -147,14 +146,13 @@ def test_score_transaction_model_without_predict_proba(
 
     mock_get_model.return_value = MockModelPredict()
     mock_get_threshold.return_value = 0.8
-    mock_datetime.now.return_value = datetime.datetime(
-        2023, 1, 1, tzinfo=datetime.timezone.utc
-    )
+    mock_datetime.now.return_value = datetime.datetime(2023, 1, 1, tzinfo=datetime.UTC)
 
     mock_db.add.return_value = None
     mock_db.commit.return_value = None
 
-    response = score_transaction(None, payload, mock_db)
+    mock_request = Mock(spec=Request)
+    response = score_transaction(mock_request, payload, mock_db)
 
     assert response.transaction_id == "tx_789"
     assert response.fraud_probability == 1.0

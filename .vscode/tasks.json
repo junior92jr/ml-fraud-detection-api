@@ -1,0 +1,53 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "venv",
+      "type": "shell",
+      "command": "make",
+      "args": ["venv"]
+    },
+    {
+      "label": "lint",
+      "type": "shell",
+      "command": "make",
+      "args": ["lint"]
+    },
+    {
+      "label": "pyright",
+      "type": "shell",
+      "command": "make",
+      "args": ["pyright"]
+    },
+    {
+      "label": "mypy",
+      "type": "shell",
+      "command": "make",
+      "args": ["mypy"]
+    },
+    {
+      "label": "typecheck",
+      "type": "shell",
+      "command": "make",
+      "args": ["typecheck"]
+    },
+    {
+      "label": "check",
+      "type": "shell",
+      "command": "make",
+      "args": ["check"]
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "make",
+      "args": ["test"]
+    },
+    {
+      "label": "fix",
+      "type": "shell",
+      "command": "make",
+      "args": ["fix"]
+    }
+  ]
+}

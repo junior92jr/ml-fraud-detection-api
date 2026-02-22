@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     Boolean,
@@ -28,7 +28,7 @@ class Transaction(Base):
     velocity_last_24h = Column(Integer, nullable=False)
     cardholder_age = Column(Integer, nullable=False)
 
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=datetime.now(UTC))
 
 
 class Prediction(Base):
@@ -41,4 +41,4 @@ class Prediction(Base):
     fraud_probability = Column(Float, nullable=False)
     decision = Column(String, nullable=False)
     model_version = Column(String, nullable=False)
-    scored_at = Column(DateTime, default=datetime.now(timezone.utc))
+    scored_at = Column(DateTime, default=datetime.now(UTC))

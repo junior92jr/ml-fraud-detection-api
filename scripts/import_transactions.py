@@ -1,13 +1,22 @@
 import csv
 
+from pydantic import ValidationError
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.config import settings
+from app.core.logfire import configure_logfire, get_logger
 from app.database import init_engine
 from app.models import Transaction
-from app.schemas import TransactionCreate
-from app.utils.logger import logger_config
+from app.schemas import MerchantCategory, TransactionCreate
 
 CSV_PATH = "resources/credit_card_fraud_10k.csv"
+MERCHANT_CATEGORIES: dict[str, MerchantCategory] = {
+    "Electronics": "Electronics",
+    "Travel": "Travel",
+    "Grocery": "Grocery",
+    "Food": "Food",
+    "Clothing": "Clothing",
+}
 
 
 def parse_bool(value: str) -> bool:
@@ -15,7 +24,7 @@ def parse_bool(value: str) -> bool:
 
 
 def import_transactions(session_factory: sessionmaker) -> None:
-    logger = logger_config("import_transactions")
+    logger = get_logger("import_transactions")
     inserted = 0
     skipped_duplicates = 0
 
@@ -25,20 +34,22 @@ def import_transactions(session_factory: sessionmaker) -> None:
         reader = csv.DictReader(f)
         for row in reader:
             try:
+                merchant_category = MERCHANT_CATEGORIES[row["merchant_category"]]
+
                 data = TransactionCreate(
                     transaction_id=row["transaction_id"],
                     amount=float(row["amount"]),
                     transaction_hour=int(row["transaction_hour"]),
-                    merchant_category=row["merchant_category"],
+                    merchant_category=merchant_category,
                     foreign_transaction=parse_bool(row["foreign_transaction"]),
                     location_mismatch=parse_bool(row["location_mismatch"]),
                     device_trust_score=int(row["device_trust_score"]),
                     velocity_last_24h=int(row["velocity_last_24h"]),
                     cardholder_age=int(row["cardholder_age"]),
                 )
-            except Exception as e:
-                logger.error(
-                    f"Skipping invalid row {row.get('transaction_id', 'N/A')}: {e}"
+            except (ValueError, KeyError, ValidationError):
+                logger.exception(
+                    "Skipping invalid row %s", row.get("transaction_id", "N/A")
                 )
                 continue
 
@@ -66,9 +77,7 @@ def import_transactions(session_factory: sessionmaker) -> None:
 
 
 if __name__ == "__main__":
-    from app.config import settings
-    from app.database import init_engine
-
+    configure_logfire(settings)
     engine, SessionLocal = init_engine(settings.DATABASE_URI, echo=True)
 
     import_transactions(SessionLocal)
