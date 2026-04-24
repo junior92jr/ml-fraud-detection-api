@@ -1,0 +1,61 @@
+services:
+  app:
+    env_file:
+      - path: .env
+        required: false
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/workspace:cached
+    ports:
+      - "8000:8000"
+
+  dashboard:
+    image: mcr.microsoft.com/devcontainers/javascript-node:20
+    working_dir: /workspace/dashboard
+    volumes:
+      - .:/workspace:cached
+      - dashboard-node-modules:/workspace/dashboard/node_modules
+      - dashboard-next-cache:/workspace/dashboard/.next
+    command: >
+      bash -lc '
+      if [ -f package.json ]; then
+        if [ -f package-lock.json ]; then npm ci; else npm install; fi &&
+        npm run dev -- --hostname 0.0.0.0 --port 3000;
+      else
+        echo "No dashboard/package.json found. Create the frontend app in /workspace/dashboard.";
+        sleep infinity;
+      fi'
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - backend
+
+  web-db:
+    ports:
+      - "5432:5432"
+
+  web-test-db:
+    image: postgres:15
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: web_test
+    ports:
+      - "5433:5432"
+    networks:
+      - backend
+
+volumes:
+  dashboard-node-modules:
+  dashboard-next-cache:

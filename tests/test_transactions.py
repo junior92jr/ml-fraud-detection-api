@@ -1,86 +1,259 @@
-from typing import cast
-from unittest.mock import Mock, patch
+import io
+from datetime import UTC, datetime
 
-from sqlalchemy.orm import Session
+import pytest
+from chainmock import mocker
+from fastapi import UploadFile
 
-from app.routers.transactions import get_transaction, list_transactions
-
-
-class MockTransaction:
-    def __init__(self, transaction_id, amount=100.0):
-        self.transaction_id = transaction_id
-        self.amount = amount
-        self.transaction_hour = 12
-        self.merchant_category = "Electronics"
-        self.foreign_transaction = False
-        self.location_mismatch = False
-        self.device_trust_score = 80
-        self.velocity_last_24h = 5
-        self.cardholder_age = 30
-        self.created_at = "2023-01-01T00:00:00Z"
-
-
-class MockPrediction:
-    def __init__(self, transaction_id):
-        self.transaction_id = transaction_id
-        self.fraud_probability = 0.5
-        self.decision = 0
-        self.model_version = "v1"
-        self.scored_at = "2023-01-01T00:00:00Z"
+from app.core.exceptions import (
+    CreateOrScoreFailedError,
+    InvalidUploadError,
+    TransactionNotFoundError,
+    UpdateOrRescoreFailedError,
+)
+from app.enums import MerchantCategory
+from app.routers import transactions as transactions_router
+from app.routers.transactions import (
+    create_transaction,
+    get_transaction,
+    list_transactions,
+    update_transaction,
+)
+from app.schemas import ScoreRequest, ScoreResponse, TransactionUpdate
 
 
-@patch("app.routers.transactions.get_session")
-def test_list_transactions(mock_get_session):
-    """Test listing transactions with default parameters."""
-    mock_db = Mock(spec=Session)
-    mock_get_session.return_value = mock_db
+@pytest.mark.anyio
+async def test_list_transactions(make_transaction):
+    mocker(transactions_router.transaction_repo).mock(
+        "list_transactions", force_async=True
+    ).return_value([make_transaction("tx1"), make_transaction("tx2")])
 
-    mock_query = Mock()
-    mock_db.query.return_value = mock_query
-    mock_query.order_by.return_value = mock_query
-    mock_query.offset.return_value = mock_query
-    mock_query.limit.return_value = mock_query
-    mock_query.all.return_value = [MockTransaction("tx1"), MockTransaction("tx2")]
-
-    response = list_transactions(limit=10, offset=0, db=mock_db)
-    response = cast(list[MockTransaction], response)
+    response = await list_transactions(limit=10, offset=0)
 
     assert len(response) == 2
     assert response[0].transaction_id == "tx1"
     assert response[1].transaction_id == "tx2"
 
 
-@patch("app.routers.transactions.get_session")
-def test_get_transaction_found(mock_get_session):
-    """Test getting a transaction that exists."""
-    mock_db = Mock(spec=Session)
-    mock_get_session.return_value = mock_db
+@pytest.mark.anyio
+async def test_get_transaction_found(make_transaction, make_prediction):
+    mocker(transactions_router.transaction_repo).mock(
+        "get_transaction_by_external_id", force_async=True
+    ).return_value(make_transaction("tx123"))
 
-    mock_tx = MockTransaction("tx123")
-    mock_db.query.return_value.filter.return_value.one_or_none.return_value = mock_tx
+    mocker(transactions_router.transaction_repo).mock(
+        "list_prediction_rows_for_transaction", force_async=True
+    ).return_value([make_prediction()])
 
-    mock_db.query.return_value.filter.return_value.order_by.return_value.all.return_value = [
-        MockPrediction("tx123")
-    ]
-
-    response = get_transaction("tx123", db=mock_db)
-    tx = response["transaction"]
-    assert isinstance(tx, MockTransaction)
-
-    assert "transaction" in response
-    assert "predictions" in response
-    assert tx.transaction_id == "tx123"
-    assert len(response["predictions"]) == 1
+    response = await get_transaction("tx123")
+    assert response.transaction.transaction_id == "tx123"
+    assert len(response.predictions) == 1
 
 
-@patch("app.routers.transactions.get_session")
-def test_get_transaction_not_found(mock_get_session):
-    """Test getting a transaction that does not exist."""
-    mock_db = Mock(spec=Session)
-    mock_get_session.return_value = mock_db
+@pytest.mark.anyio
+async def test_get_transaction_not_found():
+    mocker(transactions_router.transaction_repo).mock(
+        "get_transaction_by_external_id", force_async=True
+    ).return_value(None)
 
-    mock_db.query.return_value.filter.return_value.one_or_none.return_value = None
+    with pytest.raises(TransactionNotFoundError) as exc_info:
+        await get_transaction("missing")
 
-    response = get_transaction("nonexistent", db=mock_db)
+    exc = exc_info.value
+    assert exc.detail == "Transaction not found: missing"
 
-    assert response == {"error": "Transaction not found"}
+
+@pytest.mark.anyio
+async def test_create_transaction_success():
+    payload = ScoreRequest(
+        transaction_id="tx_123",
+        amount=100.0,
+        transaction_hour=14,
+        merchant_category=MerchantCategory.ELECTRONICS,
+        foreign_transaction=False,
+        location_mismatch=False,
+        device_trust_score=80,
+        velocity_last_24h=5,
+        cardholder_age=30,
+    )
+    expected = ScoreResponse(
+        transaction_id="tx_123",
+        fraud_probability=0.7,
+        decision=1,
+        threshold=0.5,
+        scored_at=datetime(2023, 1, 1, tzinfo=UTC),
+    )
+    mocker(transactions_router).mock(
+        "create_or_score_transaction", force_async=True
+    ).return_value(expected)
+
+    response = await create_transaction(payload)
+
+    assert response == expected
+
+
+@pytest.mark.anyio
+async def test_create_transaction_failure():
+    payload = ScoreRequest(
+        transaction_id="tx_456",
+        amount=120.0,
+        transaction_hour=9,
+        merchant_category=MerchantCategory.GROCERY,
+        foreign_transaction=False,
+        location_mismatch=False,
+        device_trust_score=90,
+        velocity_last_24h=2,
+        cardholder_age=40,
+    )
+    mocker(transactions_router).mock(
+        "create_or_score_transaction", force_async=True
+    ).side_effect(RuntimeError("boom"))
+
+    with pytest.raises(CreateOrScoreFailedError) as exc_info:
+        await create_transaction(payload)
+
+    exc = exc_info.value
+    assert exc.detail == "Create-and-score failed for transaction: tx_456"
+
+
+@pytest.mark.anyio
+async def test_update_transaction_success():
+    payload = TransactionUpdate(
+        amount=130.0,
+        transaction_hour=11,
+        merchant_category=MerchantCategory.TRAVEL,
+        foreign_transaction=True,
+        location_mismatch=False,
+        device_trust_score=72,
+        velocity_last_24h=4,
+        cardholder_age=29,
+    )
+    expected = ScoreResponse(
+        transaction_id="tx_123",
+        fraud_probability=0.4,
+        decision=0,
+        threshold=0.5,
+        scored_at=datetime(2023, 1, 1, tzinfo=UTC),
+    )
+    mocker(transactions_router).mock(
+        "update_and_rescore_transaction", force_async=True
+    ).return_value(expected)
+
+    response = await update_transaction("tx_123", payload)
+
+    assert response == expected
+
+
+@pytest.mark.anyio
+async def test_update_transaction_not_found():
+    payload = TransactionUpdate(
+        amount=130.0,
+        transaction_hour=11,
+        merchant_category=MerchantCategory.TRAVEL,
+        foreign_transaction=True,
+        location_mismatch=False,
+        device_trust_score=72,
+        velocity_last_24h=4,
+        cardholder_age=29,
+    )
+    mocker(transactions_router).mock(
+        "update_and_rescore_transaction", force_async=True
+    ).side_effect(TransactionNotFoundError("tx_missing"))
+
+    with pytest.raises(TransactionNotFoundError) as exc_info:
+        await update_transaction("tx_missing", payload)
+
+    exc = exc_info.value
+    assert exc.detail == "Transaction not found: tx_missing"
+
+
+@pytest.mark.anyio
+async def test_update_transaction_failure():
+    payload = TransactionUpdate(
+        amount=130.0,
+        transaction_hour=11,
+        merchant_category=MerchantCategory.TRAVEL,
+        foreign_transaction=True,
+        location_mismatch=False,
+        device_trust_score=72,
+        velocity_last_24h=4,
+        cardholder_age=29,
+    )
+    mocker(transactions_router).mock(
+        "update_and_rescore_transaction", force_async=True
+    ).side_effect(RuntimeError("boom"))
+
+    with pytest.raises(UpdateOrRescoreFailedError) as exc_info:
+        await update_transaction("tx_123", payload)
+
+    exc = exc_info.value
+    assert exc.detail == "Update-and-rescore failed for transaction: tx_123"
+
+
+def test_import_transactions_endpoint_success(client):
+    mocker(transactions_router).mock(
+        "import_transactions_from_csv", force_async=True
+    ).return_value(
+        {
+            "total_rows": 1,
+            "imported": 1,
+            "skipped_duplicates": 0,
+            "skipped_invalid": 0,
+            "skipped_scoring_errors": 0,
+            "errors": [],
+        }
+    )
+    csv_content = (
+        "transaction_id,amount,transaction_hour,merchant_category,foreign_transaction,"
+        "location_mismatch,device_trust_score,velocity_last_24h,cardholder_age\n"
+        "tx_1,150.5,14,Electronics,0,0,85,3,35\n"
+    )
+
+    response = client.post(
+        "/transactions/import",
+        files={"file": ("transactions.csv", csv_content, "text/csv")},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_rows"] == 1
+    assert data["imported"] == 1
+
+
+def test_import_transactions_endpoint_rejects_non_csv(client):
+    response = client.post(
+        "/transactions/import",
+        files={"file": ("transactions.txt", "hello", "text/plain")},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Only .csv files are supported"
+
+
+@pytest.mark.anyio
+async def test_import_transactions_endpoint_requires_filename():
+    file = UploadFile(filename="", file=io.BytesIO(b"transaction_id,amount\n"))
+
+    with pytest.raises(InvalidUploadError) as exc_info:
+        await transactions_router.import_transactions(file)
+
+    assert exc_info.value.detail == "Filename is required"
+
+
+def test_import_transactions_endpoint_handles_unexpected_error(client):
+    mocker(transactions_router).mock(
+        "import_transactions_from_csv", force_async=True
+    ).side_effect(RuntimeError("boom"))
+    csv_content = (
+        "transaction_id,amount,transaction_hour,merchant_category,foreign_transaction,"
+        "location_mismatch,device_trust_score,velocity_last_24h,cardholder_age\n"
+        "tx_1,150.5,14,Electronics,0,0,85,3,35\n"
+    )
+
+    response = client.post(
+        "/transactions/import",
+        files={"file": ("transactions.csv", csv_content, "text/csv")},
+    )
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "CSV import failed for file: transactions.csv"

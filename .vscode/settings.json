@@ -1,16 +1,8 @@
 {
-  "explorer.excludeGitIgnore": true,
-  "mypy.runUsingActiveInterpreter": true,
-  "mypy-type-checker.importStrategy": "fromEnvironment",
-  "mypy-type-checker.preferDaemon": true,
-  "mypy-type-checker.reportingScope": "workspace",
+  "explorer.excludeGitIgnore": false,
   "python.analysis.enablePytestSupport": true,
   "python.testing.pytestEnabled": true,
   "python.testing.pytestArgs": ["-s", "-vvv", "--tb=short", "--color=yes"],
   "python.envFile": "${workspaceFolder}/.env",
-  "coverage-gutters.highlightdark": "rgba(0, 122, 30, 0)",
-  "coverage-gutters.highlightlight": "rgba(0, 255, 64, 0)",
   "testing.coverageToolbarEnabled": true,
-  "coverage-gutters.showGutterCoverage": false,
-  "coverage-gutters.showLineCoverage": true
 }

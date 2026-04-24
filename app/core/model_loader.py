@@ -3,13 +3,25 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
-import joblib  # type: ignore[import-untyped]
+import joblib as _joblib  # type: ignore[import-untyped]
+from joblib import numpy_pickle  # type: ignore[import-untyped]
 
 from app.core.logfire import get_logger
 
 _lock = Lock()
 _bundle: dict[str, Any] | None = None
 logger = get_logger(__name__)
+
+
+class _JoblibCompat:
+    """Compat layer for environments with a broken/namespace-only joblib import."""
+
+    @staticmethod
+    def load(path: Path) -> Any:
+        return numpy_pickle.load(path)
+
+
+joblib: Any = _joblib if hasattr(_joblib, "load") else _JoblibCompat()
 
 
 def get_model_bundle() -> dict[str, Any]:

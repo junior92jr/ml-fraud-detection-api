@@ -27,8 +27,8 @@ jobs:
 
     env:
       PYTHONPATH: .
-      DATABASE_URI: postgresql://postgres:postgres@localhost:5432/web_test
-      DATABASE_URI_TEST: postgresql://postgres:postgres@localhost:5432/web_test
+      DATABASE_URI: postgres://postgres:postgres@localhost:5432/web_test
+      DATABASE_URI_TEST: postgres://postgres:postgres@localhost:5432/web_test
       MODEL_PATH: artifacts/model.joblib
       LOG_LEVEL: WARNING
       LOGFIRE_TOKEN: ""
@@ -50,19 +50,25 @@ jobs:
       - name: Wait for PostgreSQL
         run: |
           uv run python - <<'PY'
+          import asyncio
           import time
-          from sqlalchemy import create_engine, text
+          import asyncpg
 
-          uri = "postgresql://postgres:postgres@localhost:5432/web_test"
+          uri = "postgres://postgres:postgres@localhost:5432/web_test"
+
+          async def ready() -> bool:
+              try:
+                  conn = await asyncpg.connect(uri)
+                  await conn.execute("SELECT 1")
+                  await conn.close()
+                  return True
+              except Exception:
+                  return False
 
           for _ in range(30):
-              try:
-                  engine = create_engine(uri)
-                  with engine.connect() as conn:
-                      conn.execute(text("SELECT 1"))
+              if asyncio.run(ready()):
                   raise SystemExit(0)
-              except Exception:
-                  time.sleep(2)
+              time.sleep(2)
 
           raise SystemExit("PostgreSQL did not become ready in time")
           PY

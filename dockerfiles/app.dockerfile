@@ -1,5 +1,5 @@
-ARG VARIANT=3.11
-FROM mcr.microsoft.com/vscode/devcontainers/python:${VARIANT}
+ARG VARIANT=1-3.11-bookworm
+FROM mcr.microsoft.com/devcontainers/python:${VARIANT}
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -11,7 +11,8 @@ RUN if [ "$USER_GID" != "1000" ] || [ "$USER_UID" != "1000" ]; then \
     groupmod --gid $USER_GID vscode && usermod --uid $USER_UID --gid $USER_GID vscode; \
     fi
 
-RUN apt-get update && \
+RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn.list.save && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
     netcat-traditional gcc build-essential libpq-dev && \
     rm -rf /var/lib/apt/lists/*

@@ -1,18 +1,13 @@
-from enum import Enum
-from typing import Literal
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-MerchantCategory = Literal[
-    "Electronics",
-    "Travel",
-    "Grocery",
-    "Food",
-    "Clothing",
-]
+from app.enums import MerchantCategory
 
 
 class TransactionBase(BaseModel):
+    """Base model for transaction schemas, common fields and validation"""
+
     transaction_id: str
     amount: float = Field(gt=0)
     transaction_hour: int = Field(ge=0, le=23)
@@ -31,6 +26,8 @@ class TransactionCreate(TransactionBase):
 
 
 class TransactionRead(TransactionBase):
+    """Represents a transaction read from the db, includes the auto-generated"""
+
     id: int
 
     model_config = ConfigDict(from_attributes=True)
@@ -42,42 +39,69 @@ class ScoreRequest(TransactionBase):
     pass
 
 
-class Decision(Enum):
-    APPROVE = ("approve", 1)
-    REJECT = ("reject", 0)
+class TransactionUpdate(BaseModel):
+    """Used for updating transaction details, all fields are optional"""
 
-    @property
-    def label(self) -> str:
-        return self.value[0]
-
-    @property
-    def code(self) -> int:
-        return self.value[1]
+    amount: float | None = Field(default=None, gt=0)
+    transaction_hour: int | None = Field(default=None, ge=0, le=23)
+    merchant_category: MerchantCategory | None = None
+    foreign_transaction: bool | None = None
+    location_mismatch: bool | None = None
+    device_trust_score: int | None = Field(default=None, ge=0, le=100)
+    velocity_last_24h: int | None = Field(default=None, ge=0)
+    cardholder_age: int | None = Field(default=None, ge=18, le=100)
 
 
 class ScoreResponse(BaseModel):
+    """Response model for fraud scoring results"""
+
     transaction_id: str
     fraud_probability: float = Field(ge=0, le=1)
     decision: int
     threshold: float
-    model_version: str
-    scored_at: str
+    scored_at: datetime
 
 
-class FraudPredictionRequest(BaseModel):
+class PredictionRead(BaseModel):
+    """Represents a prediction read from the db, includes the auto-generated fields"""
+
+    id: int
+    transaction_id: str
+    fraud_probability: float = Field(ge=0, le=1)
+    decision: int
+    scored_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionDetailResponse(BaseModel):
+    """Detailed response model for a transaction,
+    includes transaction details and all associated predictions"""
+
+    transaction: TransactionRead
+    predictions: list[PredictionRead]
+
+
+class TransactionsCountResponse(BaseModel):
+    """Total number of transactions for pagination controls"""
+
+    total: int
+
+
+class TransactionImportError(BaseModel):
+    """Represents an error that occurred during transaction import"""
+
+    line: int
     transaction_id: str | None = None
-
-    amount: float = Field(ge=0)
-    transaction_hour: int = Field(ge=0, le=23)
-    merchant_category: str
-    foreign_transaction: int = Field(ge=0, le=1)
-    location_mismatch: int = Field(ge=0, le=1)
-    device_trust_score: float
-    velocity_last_24h: int = Field(ge=0)
-    cardholder_age: int = Field(ge=0)
+    error: str
 
 
-class FraudPredictionResponse(BaseModel):
-    transaction_id: str | None
-    is_fraud_pred: int
-    fraud_probability: float
+class TransactionImportResponse(BaseModel):
+    """Response model for transaction import results"""
+
+    total_rows: int
+    imported: int
+    skipped_duplicates: int
+    skipped_invalid: int
+    skipped_scoring_errors: int
+    errors: list[TransactionImportError]

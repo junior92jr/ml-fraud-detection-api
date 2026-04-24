@@ -50,7 +50,18 @@ uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 5. Open API docs: `http://localhost:8000/`
 
-The devcontainer compose setup includes app + PostgreSQL services.
+The repository now supports two devcontainer targets:
+
+- `/.devcontainer/api/devcontainer.json` for backend work
+- `/.devcontainer/frontend/devcontainer.json` for dashboard/frontend work
+
+Both use the shared root compose stack.
+
+For local Docker development (without devcontainer), run:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
 
 ### Option 2: Local machine with uv
 
@@ -67,7 +78,7 @@ Use this if you are **not** using devcontainers.
 You can run only PostgreSQL from compose:
 
 ```bash
-docker compose up -d web-db
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d web-db
 ```
 
 If you run DB outside docker, create a database named `web` and a user/password that matches your URI.
@@ -77,7 +88,7 @@ If you run DB outside docker, create a database named `web` and a user/password 
 Create a local `.env` (or export vars in your shell):
 
 ```bash
-export DATABASE_URI="postgresql://postgres:postgres@localhost:5432/web"
+export DATABASE_URI="postgres://postgres:postgres@localhost:5432/web"
 export MODEL_PATH="$(pwd)/artifacts/model.joblib"
 
 # Optional observability
@@ -125,6 +136,17 @@ make check
 Base URL (local): `http://localhost:8000`
 
 Interactive OpenAPI docs are served at: `GET /`
+
+Current endpoints implemented in `app/routers/transactions.py`:
+
+- `GET /transactions?limit=<n>&offset=<n>`: paginated transactions list
+- `GET /transactions/count`: total transactions count
+- `GET /transactions/scores?limit=<n>&offset=<n>`: paginated scores history
+- `GET /transactions/scores/count`: total scores count
+- `GET /transactions/{transaction_id}`: transaction details + prediction history
+- `POST /transactions`: create and score a transaction
+- `PUT /transactions/{transaction_id}`: update and rescore a transaction
+- `POST /transactions/import`: import transactions from CSV upload
 
 ### 1) Score Transaction
 

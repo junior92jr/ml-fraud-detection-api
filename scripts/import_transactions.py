@@ -1,83 +1,37 @@
-import csv
-
-from pydantic import ValidationError
-from sqlalchemy.orm import Session, sessionmaker
+import asyncio
+from pathlib import Path
 
 from app.config import settings
 from app.core.logfire import configure_logfire, get_logger
-from app.database import init_engine
-from app.models import Transaction
-from app.schemas import MerchantCategory, TransactionCreate
+from app.database import close_db, init_db
+from app.services.csv_import import import_transactions_from_csv
 
-CSV_PATH = "resources/credit_card_fraud_10k.csv"
-MERCHANT_CATEGORIES: dict[str, MerchantCategory] = {
-    "Electronics": "Electronics",
-    "Travel": "Travel",
-    "Grocery": "Grocery",
-    "Food": "Food",
-    "Clothing": "Clothing",
-}
+REPO_ROOT = Path(__file__).resolve().parents[1]
+CSV_PATH = REPO_ROOT / "resources" / "credit_card_fraud_10k.csv"
+logger = get_logger(__name__)
 
 
-def parse_bool(value: str) -> bool:
-    return bool(int(value))
+async def import_transactions_from_path(csv_path: Path = CSV_PATH) -> None:
+    if not csv_path.exists():
+        msg = f"CSV file not found: {csv_path}"
+        raise FileNotFoundError(msg)
 
-
-def import_transactions(session_factory: sessionmaker) -> None:
-    logger = get_logger("import_transactions")
-    inserted = 0
-    skipped_duplicates = 0
-
-    session: Session = session_factory()
-
-    with open(CSV_PATH, newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            try:
-                merchant_category = MERCHANT_CATEGORIES[row["merchant_category"]]
-
-                data = TransactionCreate(
-                    transaction_id=row["transaction_id"],
-                    amount=float(row["amount"]),
-                    transaction_hour=int(row["transaction_hour"]),
-                    merchant_category=merchant_category,
-                    foreign_transaction=parse_bool(row["foreign_transaction"]),
-                    location_mismatch=parse_bool(row["location_mismatch"]),
-                    device_trust_score=int(row["device_trust_score"]),
-                    velocity_last_24h=int(row["velocity_last_24h"]),
-                    cardholder_age=int(row["cardholder_age"]),
-                )
-            except (ValueError, KeyError, ValidationError):
-                logger.exception(
-                    "Skipping invalid row %s", row.get("transaction_id", "N/A")
-                )
-                continue
-
-            existing = (
-                session.query(Transaction)
-                .filter_by(transaction_id=data.transaction_id)
-                .first()
-            )
-            if existing:
-                logger.warning(
-                    f"Skipping duplicate transaction_id {data.transaction_id}"
-                )
-                skipped_duplicates += 1
-                continue
-
-            session.add(Transaction(**data.model_dump()))
-            inserted += 1
-
-    session.commit()
-    session.close()
-
-    logger.info(
-        f"Imported {inserted} transactions, skipped {skipped_duplicates} duplicates"
-    )
+    await init_db(settings.DATABASE_URI, generate_schemas=True)
+    try:
+        with csv_path.open("r", encoding="utf-8-sig", newline="") as csv_file:
+            summary = await import_transactions_from_csv(csv_stream=csv_file)
+        logger.info(
+            "Initial migration import complete: total=%s imported=%s duplicates=%s invalid=%s scoring_errors=%s",
+            summary.total_rows,
+            summary.imported,
+            summary.skipped_duplicates,
+            summary.skipped_invalid,
+            summary.skipped_scoring_errors,
+        )
+    finally:
+        await close_db()
 
 
 if __name__ == "__main__":
     configure_logfire(settings)
-    engine, SessionLocal = init_engine(settings.DATABASE_URI, echo=True)
-
-    import_transactions(SessionLocal)
+    asyncio.run(import_transactions_from_path())

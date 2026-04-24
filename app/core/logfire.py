@@ -5,7 +5,6 @@ from typing import Any
 
 import logfire
 from fastapi import FastAPI
-from sqlalchemy.engine import Engine
 
 from app.config import Settings
 
@@ -44,7 +43,6 @@ def configure_logfire(
     settings: Settings,
     *,
     app: FastAPI | None = None,
-    engine: Engine | None = None,
 ) -> None:
     global _is_configured
     _configure_stdlib_logging()
@@ -66,13 +64,6 @@ def configure_logfire(
         except RuntimeError as exc:
             logging.getLogger(__name__).warning(
                 "FastAPI instrumentation unavailable: %s", exc
-            )
-    if engine is not None:
-        try:
-            logfire.instrument_sqlalchemy(engine=engine)
-        except RuntimeError as exc:
-            logging.getLogger(__name__).warning(
-                "SQLAlchemy instrumentation unavailable: %s", exc
             )
 
 

@@ -12,14 +12,16 @@ dependencies = [
     "uvicorn==0.32.0",
     "httpx==0.27.2",
     "asyncpg==0.30.0",
-    "sqlalchemy==2.0.36",
-    "psycopg2-binary==2.9.10",
     "scikit-learn==1.6.1",
     "joblib==1.5.3",
     "pandas==2.3.3",
     "numpy>=2.0",
     "pydantic-settings==2.7.1",
     "logfire[fastapi]>=4.25.0",
+    "ipython>=9.10.0",
+    "python-multipart==0.0.20",
+    "tortoise-orm==0.25.1",
+    "scalar-fastapi>=1.8.0",
 ]
 
 [tool.setuptools]
@@ -28,7 +30,7 @@ packages = ["app"]
 [project.optional-dependencies]
 dev = [
     "mypy>=1.15.0",
-    "pyright>=1.1.394",
+    "pyright>=1.1.394,<1.1.408",
     "pytest>=9.0.2",
     "pytest-cov>=6.0.0",
     "coverage>=7.6.4",
@@ -39,8 +41,9 @@ dev = [
 
 [dependency-groups]
 dev = [
+    "chainmock==0.8.1",
     "mypy>=1.15.0",
-    "pyright>=1.1.394",
+    "pyright>=1.1.394,<1.1.408",
     "pytest>=9.0.2",
     "pytest-cov>=6.0.0",
     "ruff>=0.9.6",
@@ -89,6 +92,9 @@ docstring-code-format = true
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests", "app/tests"]
+filterwarnings = [
+    "ignore:Please use `import python_multipart` instead\\.:PendingDeprecationWarning:fastapi\\.dependencies\\.utils",
+]
 
 [tool.mypy]
 python_version = "3.11"

@@ -1,44 +1,31 @@
-from datetime import UTC, datetime
+from tortoise import fields
+from tortoise.models import Model
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-)
-
-from app.database import Base
+from app.enums import MerchantCategory
 
 
-class Transaction(Base):
-    __tablename__ = "transactions"
+class Transaction(Model):
+    """Represents a financial transaction with various attributes used for fraud detection"""
 
-    id = Column(Integer, primary_key=True)
-    transaction_id = Column(String, unique=True, nullable=False)
-
-    amount = Column(Float, nullable=False)
-    transaction_hour = Column(Integer, nullable=False)
-    merchant_category = Column(String, nullable=False)
-    foreign_transaction = Column(Boolean, nullable=False)
-    location_mismatch = Column(Boolean, nullable=False)
-    device_trust_score = Column(Integer, nullable=False)
-    velocity_last_24h = Column(Integer, nullable=False)
-    cardholder_age = Column(Integer, nullable=False)
-
-    created_at = Column(DateTime, default=datetime.now(UTC))
+    transaction_id = fields.CharField(max_length=255, unique=True)
+    amount = fields.FloatField()
+    transaction_hour = fields.IntField()
+    merchant_category = fields.CharEnumField(MerchantCategory, max_length=100)
+    foreign_transaction = fields.BooleanField()
+    location_mismatch = fields.BooleanField()
+    device_trust_score = fields.IntField()
+    velocity_last_24h = fields.IntField()
+    cardholder_age = fields.IntField()
+    created_at = fields.DatetimeField(auto_now_add=True)
 
 
-class Prediction(Base):
-    __tablename__ = "predictions"
+class Prediction(Model):
+    """Represents a prediction for a financial transaction"""
 
-    id = Column(Integer, primary_key=True)
-    transaction_id = Column(
-        String, ForeignKey("transactions.transaction_id"), nullable=False
+    transaction: fields.ForeignKeyRelation[Transaction] = fields.ForeignKeyField(
+        "models.Transaction",
+        related_name="predictions",
     )
-    fraud_probability = Column(Float, nullable=False)
-    decision = Column(String, nullable=False)
-    model_version = Column(String, nullable=False)
-    scored_at = Column(DateTime, default=datetime.now(UTC))
+    fraud_probability = fields.FloatField()
+    decision = fields.IntField()
+    scored_at = fields.DatetimeField(auto_now_add=True)

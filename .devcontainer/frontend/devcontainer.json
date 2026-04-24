@@ -1,0 +1,24 @@
+{
+  "name": "Frontend (Dashboard)",
+  "dockerComposeFile": [
+    "../../docker-compose.yml",
+    "../../docker-compose.dev.yml"
+  ],
+  "runServices": [
+    "dashboard",
+    "app",
+    "web-db"
+  ],
+  "service": "dashboard",
+  "workspaceFolder": "/workspace/dashboard",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  },
+  "remoteUser": "node"
+}
