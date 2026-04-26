@@ -3,9 +3,9 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ml-fraud-detection-api"
+name = "ml-fraud-detection-app"
 version = "0.1.0"
-description = "ML Fraud Detection API"
+description = "ML Fraud Detection App"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi==0.115.3",
@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["app"]
+packages = ["api"]
 
 [project.optional-dependencies]
 dev = [
@@ -91,7 +91,7 @@ docstring-code-format = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["tests", "app/tests"]
+testpaths = ["tests"]
 filterwarnings = [
     "ignore:Please use `import python_multipart` instead\\.:PendingDeprecationWarning:fastapi\\.dependencies\\.utils",
 ]

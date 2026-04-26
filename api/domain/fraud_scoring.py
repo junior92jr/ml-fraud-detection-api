@@ -2,7 +2,7 @@ from typing import Any
 
 import pandas as pd  # type: ignore[import-untyped]
 
-from app.schemas import ScoreRequest
+from api.schemas import ScoreRequest
 
 
 def score_request(

@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Query, UploadFile
 
-from app.core.exceptions import (
+from api.core.exceptions import (
     AppError,
     CreateOrScoreFailedError,
     CSVImportFailedError,
@@ -11,20 +11,20 @@ from app.core.exceptions import (
     TransactionNotFoundError,
     UpdateOrRescoreFailedError,
 )
-from app.core.logfire import get_logger
-from app.repositories import transactions as transaction_repo
-from app.schemas import (
+from api.core.logfire import get_logger
+from api.repositories import transactions as transaction_repo
+from api.schemas import (
     PredictionRead,
     ScoreRequest,
     ScoreResponse,
     TransactionDetailResponse,
-    TransactionsCountResponse,
     TransactionImportResponse,
     TransactionRead,
+    TransactionsCountResponse,
     TransactionUpdate,
 )
-from app.services.csv_import import import_transactions_from_csv
-from app.services.scoring import (
+from api.services.csv_import import import_transactions_from_csv
+from api.services.scoring import (
     create_or_score_transaction,
     update_and_rescore_transaction,
 )

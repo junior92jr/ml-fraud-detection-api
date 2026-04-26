@@ -5,21 +5,21 @@ import pytest
 from chainmock import mocker
 from fastapi import UploadFile
 
-from app.core.exceptions import (
+from api.core.exceptions import (
     CreateOrScoreFailedError,
     InvalidUploadError,
     TransactionNotFoundError,
     UpdateOrRescoreFailedError,
 )
-from app.enums import MerchantCategory
-from app.routers import transactions as transactions_router
-from app.routers.transactions import (
+from api.enums import MerchantCategory
+from api.routers import transactions as transactions_router
+from api.routers.transactions import (
     create_transaction,
     get_transaction,
     list_transactions,
     update_transaction,
 )
-from app.schemas import ScoreRequest, ScoreResponse, TransactionUpdate
+from api.schemas import ScoreRequest, ScoreResponse, TransactionUpdate
 
 
 @pytest.mark.anyio

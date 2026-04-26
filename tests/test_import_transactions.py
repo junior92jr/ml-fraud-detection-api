@@ -5,10 +5,10 @@ import numpy as np
 import pytest
 from chainmock import mocker
 
-from app.core.exceptions import InvalidCSVError
-from app.schemas import TransactionImportResponse
-from app.services import csv_import
-from app.services.csv_import import import_transactions_from_csv
+from api.core.exceptions import InvalidCSVError
+from api.schemas import TransactionImportResponse
+from api.services import csv_import
+from api.services.csv_import import import_transactions_from_csv
 from scripts import import_transactions as import_script
 from scripts.import_transactions import import_transactions_from_path
 

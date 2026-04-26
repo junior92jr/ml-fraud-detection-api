@@ -3,17 +3,17 @@ from typing import TextIO
 
 from pydantic import ValidationError
 
-from app.core.exceptions import InvalidCSVError
-from app.core.logfire import get_logger
-from app.core.model_loader import get_model, get_threshold
-from app.enums import MerchantCategory
-from app.repositories import transactions as transaction_repo
-from app.schemas import (
+from api.core.exceptions import InvalidCSVError
+from api.core.logfire import get_logger
+from api.core.model_loader import get_model, get_threshold
+from api.enums import MerchantCategory
+from api.repositories import transactions as transaction_repo
+from api.schemas import (
     ScoreRequest,
     TransactionImportError,
     TransactionImportResponse,
 )
-from app.services.scoring import score_payload
+from api.services.scoring import score_payload
 
 logger = get_logger(__name__)
 

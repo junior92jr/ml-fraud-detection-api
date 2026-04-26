@@ -1,7 +1,7 @@
 import pytest
 from starlette.requests import Request
 
-from app.core.exceptions import CSVImportFailedError, app_error_handler
+from api.core.exceptions import CSVImportFailedError, app_error_handler
 
 
 @pytest.mark.anyio

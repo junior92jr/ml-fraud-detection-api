@@ -1,10 +1,10 @@
 import asyncio
 from pathlib import Path
 
-from app.config import settings
-from app.core.logfire import configure_logfire, get_logger
-from app.database import close_db, init_db
-from app.services.csv_import import import_transactions_from_csv
+from api.config import settings
+from api.core.logfire import configure_logfire, get_logger
+from api.database import close_db, init_db
+from api.services.csv_import import import_transactions_from_csv
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CSV_PATH = REPO_ROOT / "resources" / "credit_card_fraud_10k.csv"

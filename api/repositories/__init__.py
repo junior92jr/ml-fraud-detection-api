@@ -1,4 +1,4 @@
-from app.repositories.transactions import (
+from api.repositories.transactions import (
     create_prediction,
     create_transaction,
     get_or_create_transaction,

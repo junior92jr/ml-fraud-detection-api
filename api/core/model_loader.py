@@ -6,7 +6,7 @@ from typing import Any
 import joblib as _joblib  # type: ignore[import-untyped]
 from joblib import numpy_pickle  # type: ignore[import-untyped]
 
-from app.core.logfire import get_logger
+from api.core.logfire import get_logger
 
 _lock = Lock()
 _bundle: dict[str, Any] | None = None

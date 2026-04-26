@@ -6,7 +6,7 @@ from typing import Any
 import logfire
 from fastapi import FastAPI
 
-from app.config import Settings
+from api.config import Settings
 
 _is_configured = False
 _is_logging_configured = False

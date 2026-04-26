@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     DB_GENERATE_SCHEMAS: bool = Field(default=False)
     LOG_LEVEL: str = Field(default="WARNING")
     LOGFIRE_TOKEN: str = Field(default="")
-    LOGFIRE_SERVICE_NAME: str = Field(default="ml-fraud-detection-api")
+    LOGFIRE_SERVICE_NAME: str = Field(default="ml-fraud-detection-app")
     LOGFIRE_ENVIRONMENT: str = Field(default="development")
     CORS_ALLOW_ORIGINS: list[str] = Field(
         default=["http://localhost:3000", "http://127.0.0.1:3000"]

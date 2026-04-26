@@ -1,7 +1,7 @@
 from tortoise import fields
 from tortoise.models import Model
 
-from app.enums import MerchantCategory
+from api.enums import MerchantCategory
 
 
 class Transaction(Model):

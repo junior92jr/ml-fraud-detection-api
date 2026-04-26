@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any, TypedDict
 
-from app.models import Prediction, Transaction
+from api.models import Prediction, Transaction
 
 
 class PredictionRow(TypedDict):
@@ -26,7 +26,13 @@ async def list_scores(*, limit: int, offset: int) -> list[PredictionRow]:
         .order_by("-scored_at")
         .offset(offset)
         .limit(limit)
-        .values("id", "transaction__transaction_id", "fraud_probability", "decision", "scored_at")
+        .values(
+            "id",
+            "transaction__transaction_id",
+            "fraud_probability",
+            "decision",
+            "scored_at",
+        )
     )
     return [
         PredictionRow(

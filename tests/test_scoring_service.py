@@ -5,10 +5,10 @@ import numpy as np
 import pytest
 from chainmock import mocker
 
-from app.core.exceptions import TransactionNotFoundError
-from app.enums import MerchantCategory
-from app.services import scoring as scoring_service
-from app.services.scoring import (
+from api.core.exceptions import TransactionNotFoundError
+from api.enums import MerchantCategory
+from api.services import scoring as scoring_service
+from api.services.scoring import (
     create_or_score_transaction,
     score_payload,
     update_and_rescore_transaction,

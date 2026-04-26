@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from chainmock import mocker
 
-from app.core import model_loader
+from api.core import model_loader
 
 
 @pytest.fixture(autouse=True)

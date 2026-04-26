@@ -1,10 +1,10 @@
 from tortoise.transactions import in_transaction
 
-from app.core.exceptions import TransactionNotFoundError
-from app.core.model_loader import get_model, get_threshold
-from app.domain.fraud_scoring import score_request
-from app.repositories import transactions as transaction_repo
-from app.schemas import ScoreRequest, ScoreResponse, TransactionUpdate
+from api.core.exceptions import TransactionNotFoundError
+from api.core.model_loader import get_model, get_threshold
+from api.domain.fraud_scoring import score_request
+from api.repositories import transactions as transaction_repo
+from api.schemas import ScoreRequest, ScoreResponse, TransactionUpdate
 
 
 def score_payload(

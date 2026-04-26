@@ -4,9 +4,9 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import SettingsTest
-from app.enums import MerchantCategory
-from app.main import create_application
+from api.config import SettingsTest
+from api.enums import MerchantCategory
+from api.main import create_application
 
 
 @pytest.fixture

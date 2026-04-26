@@ -4,12 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from scalar_fastapi import get_scalar_api_reference
 
-from app.config import Settings, settings
-from app.core.exceptions import register_exception_handlers
-from app.core.logfire import configure_logfire, get_logger
-from app.core.model_loader import get_model_bundle
-from app.database import close_db, init_db
-from app.routers import transactions
+from api.config import Settings, settings
+from api.core.exceptions import register_exception_handlers
+from api.core.logfire import configure_logfire, get_logger
+from api.core.model_loader import get_model_bundle
+from api.database import close_db, init_db
+from api.routers import transactions
 
 logger = get_logger(__name__)
 

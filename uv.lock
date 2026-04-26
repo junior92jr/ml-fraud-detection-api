@@ -640,7 +640,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ml-fraud-detection-api"
+name = "ml-fraud-detection-app"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

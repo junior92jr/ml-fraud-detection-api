@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.enums import MerchantCategory
+from api.enums import MerchantCategory
 
 
 class TransactionBase(BaseModel):
