@@ -32,7 +32,7 @@ jobs:
       MODEL_PATH: artifacts/model.joblib
       LOG_LEVEL: WARNING
       LOGFIRE_TOKEN: ""
-      LOGFIRE_SERVICE_NAME: ml-fraud-detection-api
+      LOGFIRE_SERVICE_NAME: ml-fraud-detection-app
       LOGFIRE_ENVIRONMENT: ci
 
     steps:

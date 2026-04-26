@@ -1,6 +1,6 @@
-# ML Fraud Detection API
+# ML Fraud Detection App
 
-FastAPI service that scores card transactions for fraud using a pre-trained model, stores transactions/predictions in PostgreSQL, and exposes REST endpoints for scoring and retrieval.
+The repository is built as a full product, with the backend service living in `api/` and the dashboard frontend in `dashboard/`.
 
 ## What This Repo Uses
 
@@ -14,50 +14,60 @@ FastAPI service that scores card transactions for fraud using a pre-trained mode
 
 ## Project Layout
 
-- `app/main.py`: FastAPI app setup and router wiring
-- `app/routers/score.py`: `POST /score`
-- `app/routers/transactions.py`: `GET /transactions`, `GET /transactions/{transaction_id}`
-- `app/core/model_loader.py`: lazy model bundle loading (`MODEL_PATH`)
-- `app/core/logfire.py`: logging/Logfire setup
-- `app/database.py`: engine/session/base setup
+- `api/`: backend package and FastAPI service
+  - `api/main.py`: FastAPI app setup and router wiring
+  - `api/routers/transactions.py`: transaction and scoring endpoints
+  - `api/core/`: exception handling, logging, and model loader logic
+  - `api/database.py`: engine, session, and DB startup/shutdown helpers
+  - `api/models.py`, `api/schemas.py`: ORM models and request/response schemas
+- `dashboard/`: Next.js dashboard UI and client-side code
+- `docker-compose.yml`: production-style compose services
+- `docker-compose.dev.yml`: local development overrides for backend, dashboard, and test DB
+- `.devcontainer/api/`: backend development container
+- `.devcontainer/frontend/`: frontend/dashboard development container
+- `tests/`: backend test suite
 - `scripts/import_transactions.py`: CSV import helper
-- `tests/`: test suite
+- `artifacts/model.joblib`: trained model bundle
+- `deploy/nginx/default.conf`: local reverse proxy configuration
+
+> Note: `dashboard/app/` is the frontend Next.js app root. The backend code is now under `api/`.
 
 ## Run Options
 
 ### Option 1: VS Code Dev Container (recommended)
 
-### Prerequisites
+Use the built-in devcontainer setup when you want backend and frontend development to run from the same repo root.
 
-- Docker + Docker Compose
-- VS Code with Dev Containers extension
-
-### Steps
+#### Backend development container
 
 1. Open the repo in VS Code.
 2. Run `Dev Containers: Reopen in Container`.
-3. Inside the container, install/sync dependencies:
+3. Choose the backend container from `.devcontainer/api`.
+4. Inside the container, install and sync dependencies:
 
 ```bash
 make venv
 ```
 
-4. Start API:
+5. Start the backend service:
 
 ```bash
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-5. Open API docs: `http://localhost:8000/`
+6. Open the backend OpenAPI docs at `http://localhost:8000/`.
 
-The repository now supports two devcontainer targets:
+#### Frontend development container
 
-- `/.devcontainer/api/devcontainer.json` for backend work
-- `/.devcontainer/frontend/devcontainer.json` for dashboard/frontend work
+The dashboard development container is configured in `.devcontainer/frontend`.
 
-Both use the shared root compose stack.
+- It starts the Next.js dashboard on port `3000`.
+- It runs in the same repo root and can call the backend at `http://localhost:8000`.
+- Open `.devcontainer/frontend` in VS Code and let the container build the frontend dependencies.
 
-For local Docker development (without devcontainer), run:
+Both devcontainers are designed to work from the same repository and share the local compose stack.
+
+For local Docker development without devcontainers, run:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
@@ -81,7 +91,7 @@ You can run only PostgreSQL from compose:
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d web-db
 ```
 
-If you run DB outside docker, create a database named `web` and a user/password that matches your URI.
+If you run the DB outside Docker, create a database named `web` and a user/password that matches your URI.
 
 ### 2) Configure environment variables
 
@@ -94,7 +104,7 @@ export MODEL_PATH="$(pwd)/artifacts/model.joblib"
 # Optional observability
 export LOG_LEVEL="WARNING"          # e.g. DEBUG, INFO, WARNING, ERROR
 export LOGFIRE_TOKEN=""             # leave empty to disable cloud export
-export LOGFIRE_SERVICE_NAME="ml-fraud-detection-api"
+export LOGFIRE_SERVICE_NAME="ml-fraud-detection-app"
 export LOGFIRE_ENVIRONMENT="development"
 ```
 
@@ -108,10 +118,10 @@ make venv
 
 (`make venv` runs `uv sync --frozen`.)
 
-### 4) Start API
+### 4) Start backend service
 
 ```bash
-uv run uvicorn app.main:app --reload
+uv run uvicorn api.main:app --reload
 ```
 
 ### 5) Run tests and checks
@@ -131,13 +141,13 @@ make check
 - `make fix`: auto-fix Ruff issues + format
 - `make clean`: remove caches and virtualenv
 
-## API Reference
+## Backend API Reference
 
 Base URL (local): `http://localhost:8000`
 
 Interactive OpenAPI docs are served at: `GET /`
 
-Current endpoints implemented in `app/routers/transactions.py`:
+Current endpoints implemented in `api/routers/transactions.py`:
 
 - `GET /transactions?limit=<n>&offset=<n>`: paginated transactions list
 - `GET /transactions/count`: total transactions count
